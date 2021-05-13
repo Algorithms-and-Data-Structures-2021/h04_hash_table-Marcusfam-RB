@@ -16,30 +16,58 @@ namespace itis {
     if (load_factor <= 0.0 || load_factor > 1.0) {
       throw std::logic_error("hash table load factor must be in range [0...1]");
     }
-
+    buckets_.resize(capacity);
     // Tip: allocate hash-table buckets
   }
 
   std::optional<std::string> HashTable::Search(int key) const {
+      auto index = hash(key);
+      for (auto &pair:buckets_[index]){
+          if (pair.first == key){
+              return pair.second;
+          }
+      }
     // Tip: compute hash code (index) and use linear search
     return std::nullopt;
   }
 
-  void HashTable::Put(int key, const std::string &value) {
-    // Tip 1: compute hash code (index) to determine which bucket to use
-    // Tip 2: consider the case when the key exists (read the docs in the header file)
+    void HashTable::Put(int key, const std::string &value) {
+        auto index = hash(key);
+        std::pair <int, std::string> new_pair (key, value);
+        for (auto &pair:buckets_[index]) {
+            if (pair.first == key) {
+                pair = new_pair;
+                return;
+            }
+        }
 
-    if (static_cast<double>(num_keys_) / buckets_.size() >= load_factor_) {
-      // Tip 3: recompute hash codes (indices) for key-value pairs (create a new hash-table)
-      // Tip 4: use utils::hash(key, size) to compute new indices for key-value pairs
+        buckets_[index].push_back(new_pair);
+        num_keys_++;
+        // Tip 1: compute hash code (index) to determine which bucket to use
+        // Tip 2: consider the case when the key exists (read the docs in the header file)
+        if (static_cast<double>(num_keys_) / buckets_.size() >= load_factor_) {
+            // Tip 3: recompute hash codes (indices) for key-value pairs (create a new hash-table)
+            // Tip 4: use utils::hash(key, size) to compute new indices for key-value pairs
+            utils::hash(key,buckets_.size());
+            buckets_.resize(buckets_.capacity() * HashTable::kGrowthCoefficient);
+        }
     }
-  }
 
-  std::optional<std::string> HashTable::Remove(int key) {
-    // Tip 1: compute hash code (index) to determine which bucket to use
-    // TIp 2: find the key-value pair to remove and make a copy of value to return
-    return std::nullopt;
-  }
+
+    std::optional<std::string> HashTable::Remove(int key) {
+        // Tip 1: compute hash code (index) to determine which bucket to use
+        // TIp 2: find the key-value pair to remove and make a copy of value to return
+        int index = hash(key);
+        for(auto pair:buckets_[index]){
+            if(pair.first == key){
+                auto value = pair;
+                buckets_[index].remove(pair);
+                return value.second;
+            }
+        }
+        return std::nullopt;
+    }
+
 
   bool HashTable::ContainsKey(int key) const {
     // Note: uses Search(key) which is not initially implemented
