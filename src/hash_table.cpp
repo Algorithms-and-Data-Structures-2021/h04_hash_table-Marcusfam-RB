@@ -22,8 +22,7 @@ namespace itis {
 
   std::optional<std::string> HashTable::Search(int key) const {
       auto index = hash(key);
-      auto bucket = buckets_[index];
-      for (auto pair:bucket){
+      for (auto &pair:buckets_[index]){
           if (pair.first == key){
               return pair.second;
           }
@@ -33,14 +32,17 @@ namespace itis {
   }
 
     void HashTable::Put(int key, const std::string &value) {
-        int index = hash(key);
-        if (buckets_[index].empty()){
-            num_keys_++;
-            buckets_[index].push_back(std::pair(key,value));
+        auto index = hash(key);
+        std::pair <int, std::string> new_pair (key, value);
+        for (auto &pair:buckets_[index]) {
+            if (pair.first == key) {
+                pair = new_pair;
+                return;
+            }
         }
-        else {
-            buckets_[index].push_back(std::pair(key,value));
-        }
+
+        buckets_[index].push_back(new_pair);
+        num_keys_++;
         // Tip 1: compute hash code (index) to determine which bucket to use
         // Tip 2: consider the case when the key exists (read the docs in the header file)
         if (static_cast<double>(num_keys_) / buckets_.size() >= load_factor_) {
